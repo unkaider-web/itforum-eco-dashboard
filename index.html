@@ -164,6 +164,7 @@
     async function loadData(showStatus = true) {
         const statusDiv = document.getElementById('syncStatus');
         const refreshBtn = document.getElementById('refreshBtn');
+        const lastUpdateDiv = document.getElementById('lastUpdate');
         
         if (showStatus) {
             statusDiv.innerHTML = '⏳ Загрузка...';
@@ -171,40 +172,68 @@
         }
         
         try {
-            const url = SCRIPT_URL + '?t=' + Date.now();
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Ошибка');
+            // Используем случайный параметр для обхода кеша
+            const cacheBuster = Date.now() + Math.random();
+            const url = SCRIPT_URL + '?nocache=' + cacheBuster;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Ошибка загрузки');
             const data = await response.json();
             
             if (!data || data.length === 0) throw new Error('Нет данных');
             
             const newHash = getDataHash(data);
-            if (newHash !== lastDataHash) {
+            
+            if (newHash !== lastDataHash || showStatus) {
                 lastDataHash = newHash;
                 allData = data;
                 renderDashboard(allData);
-                if (showStatus) statusDiv.innerHTML = '✅ Обновлено';
-                document.getElementById('lastUpdate').innerHTML = `📅 Обновлено: ${new Date().toLocaleString('ru-RU')}`;
+                if (showStatus) statusDiv.innerHTML = '✅ Данные обновлены';
+                lastUpdateDiv.innerHTML = `📅 Обновлено: ${new Date().toLocaleString('ru-RU')}`;
+                setTimeout(() => {
+                    if (statusDiv.innerHTML === '✅ Данные обновлены') statusDiv.innerHTML = '';
+                }, 2000);
             } else {
-                if (showStatus) statusDiv.innerHTML = 'ℹ️ Данные актуальны';
+                if (showStatus) {
+                    statusDiv.innerHTML = 'ℹ️ Данные актуальны';
+                    setTimeout(() => {
+                        if (statusDiv.innerHTML === 'ℹ️ Данные актуальны') statusDiv.innerHTML = '';
+                    }, 1500);
+                }
             }
         } catch (error) {
-            console.error(error);
-            if (showStatus) statusDiv.innerHTML = '❌ Ошибка';
+            console.error('Ошибка:', error);
+            if (showStatus) {
+                statusDiv.innerHTML = '❌ Ошибка';
+                setTimeout(() => {
+                    if (statusDiv.innerHTML === '❌ Ошибка') statusDiv.innerHTML = '';
+                }, 2000);
+            }
             if (!allData.length) {
                 document.getElementById('dashboardContent').innerHTML = '<div class="loader">❌ Ошибка загрузки данных</div>';
             }
         } finally {
             if (showStatus) {
                 refreshBtn.disabled = false;
-                setTimeout(() => { if (statusDiv.innerHTML === '✅ Обновлено' || statusDiv.innerHTML === 'ℹ️ Данные актуальны') statusDiv.innerHTML = ''; }, 2000);
             }
         }
     }
     
     document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
     
+    // Первая загрузка
     loadData(true);
+    
+    // Автообновление каждые 5 минут (без показа статуса, чтобы не мигало)
     setInterval(() => loadData(false), 300000);
 </script>
 </body>
