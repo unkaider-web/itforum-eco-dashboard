@@ -15,7 +15,60 @@
         .container { max-width: 1200px; margin: 0 auto; }
         h1 { text-align: center; color: white; margin-bottom: 10px; font-size: 1.8em; }
         .subtitle { text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 25px; font-size: 14px; }
-        .toolbar {
+
+        .timer-section {
+            margin-bottom: 30px;
+        }
+        .timer-card {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            border-radius: 30px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transition: background 0.3s ease;
+            position: relative;
+        }
+        .timer-card.warning {
+            background: linear-gradient(135deg, #c62828, #b71c1c);
+        }
+        .timer-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .timer-display {
+            font-size: 5em;
+            font-weight: 800;
+            color: white;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .timer-buttons {
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .timer-small-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: rgba(255,255,255,0.7);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .timer-small-btn:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+        }
+
+        .top-bar {
             display: flex;
             justify-content: flex-end;
             align-items: center;
@@ -24,51 +77,59 @@
             flex-wrap: wrap;
         }
         .refresh-btn {
-            background: #28a745;
+            background: rgba(255,255,255,0.15);
             color: white;
-            border: none;
-            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 16px;
             border-radius: 30px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             transition: 0.2s;
         }
-        .refresh-btn:hover { background: #218838; }
-        .refresh-btn:disabled { background: #6c757d; cursor: not-allowed; }
-        .auto-badge {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 30px;
-            font-size: 12px;
-        }
-        .status { color: rgba(255,255,255,0.8); font-size: 13px; }
+        .refresh-btn:hover { background: rgba(255,255,255,0.25); }
+        .status { color: rgba(255,255,255,0.8); font-size: 12px; }
         .last-updated { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 5px; text-align: right; }
-        .stats-grid {
+
+        .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 30px;
         }
         .stat-card {
             background: white;
-            border-radius: 15px;
-            padding: 15px;
+            border-radius: 20px;
+            padding: 25px;
             text-align: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .stat-card h3 { color: #0d4a82; font-size: 0.75em; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-card .value { font-size: 2em; font-weight: 800; color: #1a6fb0; }
-        .stat-card .small { font-size: 0.8em; color: #6c757d; margin-top: 5px; }
+        .stat-card h3 {
+            color: #0d4a82;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .stat-card .value {
+            font-size: 3em;
+            font-weight: 800;
+            color: #1a6fb0;
+        }
+
         .table-container {
             background: white;
-            border-radius: 15px;
-            padding: 18px;
+            border-radius: 20px;
+            padding: 20px;
             overflow-x: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .table-container h3 { color: #0d4a82; margin-bottom: 15px; font-size: 1.1em; border-left: 3px solid #0d4a82; padding-left: 12px; }
+        .table-container h3 {
+            color: #0d4a82;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-left: 3px solid #0d4a82;
+            padding-left: 12px;
+        }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th { background: #0d4a82; color: white; padding: 12px 10px; text-align: left; }
         td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
@@ -76,11 +137,14 @@
         .rank-1 td:first-child { font-weight: 800; color: #ffd700; text-shadow: 0 0 1px #000; }
         .rank-2 td:first-child { font-weight: 800; color: #c0c0c0; }
         .rank-3 td:first-child { font-weight: 800; color: #cd7f32; }
+
         .loader { text-align: center; padding: 40px; color: white; font-size: 18px; }
         .footer { text-align: center; margin-top: 30px; color: rgba(255,255,255,0.5); font-size: 11px; }
         @media (max-width: 700px) {
-            th, td { font-size: 12px; padding: 8px 6px; }
-            .stat-card .value { font-size: 1.5em; }
+            .timer-display { font-size: 2.5em; }
+            .stat-card .value { font-size: 2em; }
+            .stats-row { gap: 12px; }
+            .timer-buttons { position: static; justify-content: center; margin-top: 12px; }
         }
     </style>
 </head>
@@ -89,23 +153,113 @@
     <h1>📊 Дашборд оценки вендоров</h1>
     <div class="subtitle">Экспертная сессия «Применение ДЗЗ, БАС и ИИ в природоохранной деятельности» — Биржа решений 2026</div>
     
-    <div class="toolbar">
-        <div class="auto-badge">🔄 Автообновление: 5 минут</div>
+    <div class="top-bar">
+        <div class="auto-badge" style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 30px; font-size: 12px;">🔄 Автообновление: 5 минут</div>
         <button class="refresh-btn" id="refreshBtn">🔄 Обновить сейчас</button>
         <div class="status" id="syncStatus"></div>
     </div>
     <div class="last-updated" id="lastUpdate"></div>
+
+    <div class="timer-section">
+        <div class="timer-card" id="timerCard">
+            <div class="timer-label">⏰ ДО СЛЕДУЮЩЕГО ПЕРЕХОДА</div>
+            <div class="timer-display" id="timerDisplay">10:00</div>
+            <div class="timer-buttons">
+                <button class="timer-small-btn" id="resetTimerBtn">Сбросить</button>
+                <button class="timer-small-btn" id="stopTimerBtn">⏸ Остановить</button>
+                <button class="timer-small-btn" id="startTimerBtn">▶ Запустить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <h3>📊 Всего голосов</h3>
+            <div class="value" id="totalVotes">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>✅ Заинтересовало</h3>
+            <div class="value" id="interestedCount">0</div>
+        </div>
+    </div>
 
     <div id="dashboardContent"><div class="loader">Загрузка данных...</div></div>
     <div class="footer">Данные загружаются из Google Sheets в реальном времени</div>
 </div>
 
 <script>
-    // НОВАЯ ССЫЛКА НА ВАШ APPS SCRIPT
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3IuYipcj_pJHZZUy9XsuO2TeOb2YFp_r7CAinStbsUtyyDvtJ2DN5UFN5RSdOEuTVzw/exec';
     
     let allData = [];
     let lastDataHash = '';
+    let timerInterval = null;
+    let totalSeconds = 600;
+    let autoRefreshInterval = null;
+    
+    // Тревожный звук, 3 секунды
+    function playAlarm() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioContext.currentTime;
+            
+            const oscillator1 = audioContext.createOscillator();
+            const gainNode1 = audioContext.createGain();
+            oscillator1.connect(gainNode1);
+            gainNode1.connect(audioContext.destination);
+            oscillator1.frequency.value = 220;
+            gainNode1.gain.value = 0.6;
+            oscillator1.start();
+            gainNode1.gain.exponentialRampToValueAtTime(0.0001, now + 3);
+            oscillator1.stop(now + 3);
+            
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode2 = audioContext.createGain();
+            oscillator2.connect(gainNode2);
+            gainNode2.connect(audioContext.destination);
+            oscillator2.frequency.value = 330;
+            gainNode2.gain.value = 0.4;
+            oscillator2.start();
+            oscillator2.frequency.exponentialRampToValueAtTime(440, now + 1.5);
+            oscillator2.frequency.exponentialRampToValueAtTime(330, now + 3);
+            gainNode2.gain.exponentialRampToValueAtTime(0.0001, now + 3);
+            oscillator2.stop(now + 3);
+        } catch(e) {}
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        document.getElementById('timerDisplay').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const timerCard = document.getElementById('timerCard');
+        timerCard.classList.toggle('warning', totalSeconds <= 120);
+    }
+
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function startTimer() {
+        if (timerInterval) stopTimer();
+        timerInterval = setInterval(() => {
+            if (totalSeconds <= 0) {
+                playAlarm();
+                totalSeconds = 600;
+                updateTimerDisplay();
+            } else {
+                totalSeconds--;
+                updateTimerDisplay();
+            }
+        }, 1000);
+    }
+
+    function resetTimer() {
+        stopTimer();
+        totalSeconds = 600;
+        updateTimerDisplay();
+    }
 
     function getDataHash(data) {
         let str = '';
@@ -121,11 +275,8 @@
     }
 
     function renderDashboard(data) {
-        const uniqueOrgs = new Set(data.map(d => d['Наименование'])).size;
-        const totalScores = data.map(d => parseInt(d['СУММА БАЛЛОВ']) || 0);
-        const avgScore = totalScores.length ? (totalScores.reduce((a,b) => a+b, 0) / totalScores.length).toFixed(1) : 0;
+        const totalVotes = data.length;
         const interestedCount = data.filter(d => d['Заинтересовало для дальнейшего рассмотрения?'] === 'Да').length;
-        const totalSum = totalScores.reduce((a,b) => a+b, 0);
         
         const orgTotalScores = {};
         data.forEach(d => {
@@ -147,19 +298,16 @@
         });
         
         const html = `
-            <div class="stats-grid">
-                <div class="stat-card"><h3>📊 Всего голосов</h3><div class="value">${data.length}</div></div>
-                <div class="stat-card"><h3>🏢 Уникальных вендоров</h3><div class="value">${uniqueOrgs}</div></div>
-                <div class="stat-card"><h3>⭐ Средний балл</h3><div class="value">${avgScore}</div><div class="small">из 25 возможных</div></div>
-                <div class="stat-card"><h3>✅ Заинтересовало</h3><div class="value">${interestedCount}</div><div class="small">${((interestedCount/data.length)*100).toFixed(1)}% от голосов</div></div>
-                <div class="stat-card"><h3>💰 Сумма баллов</h3><div class="value">${totalSum}</div></div>
-            </div>
             <div class="table-container">
                 <h3>🏆 Рейтинг вендоров по сумме баллов</h3>
-                <table><thead><tr><th>#</th><th>Вендор</th><th>Сумма баллов</th></tr></thead><tbody>${tableRows}</tbody></table>
+                <table><thead><tr><th>#</th><th>Вендор</th><th>Сумма баллов</th></tr></thead>
+                <tbody>${tableRows}</tbody></table>
             </div>
         `;
+        
         document.getElementById('dashboardContent').innerHTML = html;
+        document.getElementById('totalVotes').textContent = totalVotes;
+        document.getElementById('interestedCount').textContent = interestedCount;
     }
 
     async function loadData(showStatus = true) {
@@ -175,53 +323,49 @@
         try {
             const url = SCRIPT_URL + '?ts=' + Date.now();
             const response = await fetch(url);
-            
             if (!response.ok) throw new Error('Ошибка загрузки');
             const data = await response.json();
-            
             if (!data || data.length === 0) throw new Error('Нет данных');
             
             const newHash = getDataHash(data);
-            
             if (newHash !== lastDataHash) {
                 lastDataHash = newHash;
                 allData = data;
                 renderDashboard(allData);
                 if (showStatus) statusDiv.innerHTML = '✅ Данные обновлены';
                 lastUpdateDiv.innerHTML = `📅 Обновлено: ${new Date().toLocaleString('ru-RU')}`;
-                setTimeout(() => {
-                    if (statusDiv.innerHTML === '✅ Данные обновлены') statusDiv.innerHTML = '';
-                }, 2000);
+                setTimeout(() => { if (statusDiv.innerHTML === '✅ Данные обновлены') statusDiv.innerHTML = ''; }, 2000);
             } else {
                 if (showStatus) {
                     statusDiv.innerHTML = 'ℹ️ Данные актуальны';
-                    setTimeout(() => {
-                        if (statusDiv.innerHTML === 'ℹ️ Данные актуальны') statusDiv.innerHTML = '';
-                    }, 1500);
+                    setTimeout(() => { if (statusDiv.innerHTML === 'ℹ️ Данные актуальны') statusDiv.innerHTML = ''; }, 1500);
                 }
                 lastUpdateDiv.innerHTML = `📅 Проверено: ${new Date().toLocaleString('ru-RU')}`;
             }
         } catch (error) {
-            console.error('Ошибка:', error);
+            console.error(error);
             if (showStatus) {
                 statusDiv.innerHTML = '❌ Ошибка';
-                setTimeout(() => {
-                    if (statusDiv.innerHTML === '❌ Ошибка') statusDiv.innerHTML = '';
-                }, 2000);
+                setTimeout(() => { if (statusDiv.innerHTML === '❌ Ошибка') statusDiv.innerHTML = ''; }, 2000);
             }
             if (!allData.length) {
                 document.getElementById('dashboardContent').innerHTML = '<div class="loader">❌ Ошибка загрузки данных</div>';
             }
         } finally {
-            if (showStatus) {
-                refreshBtn.disabled = false;
-            }
+            if (showStatus) refreshBtn.disabled = false;
         }
     }
     
     document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
+    document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+    document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
+    document.getElementById('startTimerBtn').addEventListener('click', startTimer);
     
+    updateTimerDisplay();
+    startTimer();
     loadData(true);
+    
+    // Автообновление данных каждые 5 минут
     setInterval(() => loadData(false), 300000);
 </script>
 </body>
