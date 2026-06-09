@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд оценки вендоров | Биржа решений 2026</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0d4a82, #1a6fb0);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: white; margin-bottom: 10px; font-size: 1.8em; }
+        .subtitle { text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 25px; font-size: 14px; }
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .refresh-btn:hover { background: #218838; }
+        .refresh-btn:disabled { background: #6c757d; cursor: not-allowed; }
+        .status { color: rgba(255,255,255,0.8); font-size: 13px; }
+        .last-updated { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 5px; text-align: right; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 { color: #0d4a82; font-size: 0.75em; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card .value { font-size: 2em; font-weight: 800; color: #1a6fb0; }
+        .stat-card .small { font-size: 0.8em; color: #6c757d; margin-top: 5px; }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 18px;
+            overflow-x: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .table-container h3 { color: #0d4a82; margin-bottom: 15px; font-size: 1.1em; border-left: 3px solid #0d4a82; padding-left: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #0d4a82; color: white; padding: 12px 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f1f5f9; }
+        .rank-1 { background: #fff8e1; }
+        .rank-1 td:first-child { font-weight: 800; color: #ffd700; text-shadow: 0 0 1px #000; }
+        .rank-2 td:first-child { font-weight: 800; color: #c0c0c0; }
+        .rank-3 td:first-child { font-weight: 800; color: #cd7f32; }
+        .loader { text-align: center; padding: 40px; color: white; font-size: 18px; }
+        .footer { text-align: center; margin-top: 30px; color: rgba(255,255,255,0.5); font-size: 11px; }
+        @media (max-width: 700px) {
+            th, td { font-size: 12px; padding: 8px 6px; }
+            .stat-card .value { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 Дашборд оценки вендоров</h1>
+    <div class="subtitle">Экспертная сессия «Применение ДЗЗ, БАС и ИИ в природоохранной деятельности» — Биржа решений 2026</div>
+    
+    <div class="toolbar">
+        <button class="refresh-btn" id="refreshBtn">🔄 Обновить данные</button>
+        <div class="status" id="syncStatus"></div>
+    </div>
+    <div class="last-updated" id="lastUpdate"></div>
+
+    <div id="dashboardContent"><div class="loader">Загрузка данных...</div></div>
+    <div class="footer">Данные загружаются из Google Sheets в реальном времени</div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1YoIohcD4SxpMC1WiBmRnkuiYU0B8hijYTxttm9MwMHCCPiuFfHBDx7ysmF_LCRWSaA/exec';
+    
+    let allData = [];
+
+    async function loadData() {
+        const container = document.getElementById('dashboardContent');
+        const statusDiv = document.getElementById('syncStatus');
+        const refreshBtn = document.getElementById('refreshBtn');
+        
+        container.innerHTML = '<div class="loader">Загрузка данных...</div>';
+        statusDiv.innerHTML = '⏳ Загрузка...';
+        refreshBtn.disabled = true;
+        
+        try {
+            const response = await fetch(SCRIPT_URL);
+            if (!response.ok) throw new Error('Ошибка загрузки');
+            allData = await response.json();
+            
+            if (!allData || allData.length === 0) throw new Error('Нет данных');
+            
+            renderDashboard(allData);
+            statusDiv.innerHTML = '✅ Данные загружены';
+            document.getElementById('lastUpdate').innerHTML = `📅 Последнее обновление: ${new Date().toLocaleString('ru-RU')}`;
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = `
+                <div class="loader">
+                    ❌ Ошибка загрузки: ${error.message}<br>
+                    Проверьте, что скрипт развёрнут и доступ открыт для «Всех».
+                </div>
+            `;
+            statusDiv.innerHTML = '❌ Ошибка загрузки';
+        } finally {
+            refreshBtn.disabled = false;
+            setTimeout(() => { if (statusDiv.innerHTML === '✅ Данные загружены') statusDiv.innerHTML = ''; }, 3000);
+        }
+    }
+
+    function renderDashboard(data) {
+        // Статистика
+        const uniqueOrgs = new Set(data.map(d => d['Наименование'])).size;
+        const totalScores = data.map(d => parseInt(d['СУММА БАЛЛОВ']) || 0);
+        const avgScore = totalScores.length ? (totalScores.reduce((a,b) => a+b, 0) / totalScores.length).toFixed(1) : 0;
+        const interestedCount = data.filter(d => d['Заинтересовало для дальнейшего рассмотрения?'] === 'Да').length;
+        
+        // Рейтинг вендоров по МАКСИМАЛЬНОМУ баллу (а не среднему)
+        const orgMaxScores = {};
+        data.forEach(d => {
+            const org = d['Наименование'];
+            const score = parseInt(d['СУММА БАЛЛОВ']) || 0;
+            if (!orgMaxScores[org] || orgMaxScores[org] < score) {
+                orgMaxScores[org] = score;
+            }
+        });
+        const orgRanking = Object.entries(orgMaxScores)
+            .map(([org, maxScore]) => ({ org, maxScore }))
+            .sort((a, b) => b.maxScore - a.maxScore);
+        
+        const html = `
+            <div class="stats-grid">
+                <div class="stat-card"><h3>📊 Всего голосов</h3><div class="value">${data.length}</div></div>
+                <div class="stat-card"><h3>🏢 Уникальных вендоров</h3><div class="value">${uniqueOrgs}</div></div>
+                <div class="stat-card"><h3>⭐ Средний балл</h3><div class="value">${avgScore}</div><div class="small">из 25 возможных</div></div>
+                <div class="stat-card"><h3>✅ Заинтересовало</h3><div class="value">${interestedCount}</div><div class="small">${((interestedCount/data.length)*100).toFixed(1)}% от голосов</div></div>
+            </div>
+            <div class="table-container">
+                <h3>🏆 Рейтинг вендоров по максимальному баллу</h3>
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>Вендор</th><th>Максимальный балл</th></tr>
+                    </thead>
+                    <tbody>
+                        ${orgRanking.map((item, idx) => `
+                            <tr class="${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''}">
+                                <td>${idx + 1}</div></div>
+                                <td>${item.org}</div></div>
+                                <td><strong>${item.maxScore}</strong></div></div>
+                            </table>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        document.getElementById('dashboardContent').innerHTML = html;
+    }
+    
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
+    loadData();
+</script>
+</body>
+</html>
