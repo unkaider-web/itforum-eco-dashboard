@@ -196,7 +196,6 @@
     let totalSeconds = 600;
     let autoRefreshInterval = null;
     
-    // Тревожный звук, 3 секунды
     function playAlarm() {
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -321,19 +320,8 @@
         }
         
         try {
-            // Уникальный параметр для обхода кеша
-            const cacheBuster = Date.now() + Math.random() * 1000;
-            const url = SCRIPT_URL + '?ts=' + cacheBuster;
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
+            const url = SCRIPT_URL + '?ts=' + Date.now();
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Ошибка загрузки');
             const data = await response.json();
             if (!data || data.length === 0) throw new Error('Нет данных');
@@ -376,7 +364,7 @@
     startTimer();
     loadData(true);
     
-    // Автообновление данных каждые 3 минуты
+    // Автообновление каждые 3 минуты
     setInterval(() => loadData(false), 180000);
 </script>
 </body>
