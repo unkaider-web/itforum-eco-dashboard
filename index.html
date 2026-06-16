@@ -227,10 +227,8 @@
     let allData = [];
     let juryData = [];
     let lastDataHash = '';
-    let lastJuryHash = '';
     let timerInterval = null;
     let totalSeconds = 600;
-    let currentTab = 'tab1';
     
     function playAlarm() {
         try {
@@ -294,10 +292,10 @@
         updateTimerDisplay();
     }
 
-    function getDataHash(data, idField = 'Наименование', scoreField = 'СУММА БАЛЛОВ') {
+    function getDataHash(data) {
         let str = '';
         data.forEach(d => {
-            str += (d[idField] || '') + ':' + (d[scoreField] || 0) + ';';
+            str += (d['Наименование'] || '') + ':' + (d['СУММА БАЛЛОВ'] || 0) + ';';
         });
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -345,6 +343,11 @@
     }
 
     function renderJuryDashboard(data) {
+        if (!data || data.length === 0) {
+            document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">Нет данных от жюри</div>';
+            return;
+        }
+        
         const orgTotalScores = {};
         data.forEach(d => {
             const org = d['Компания'];
@@ -420,24 +423,20 @@
         }
     }
 
-    async function loadJuryData(showStatus = true) {
+    async function loadJuryData() {
         try {
             const url = SCRIPT_URL + '?ts=' + Date.now() + '&sheet=jury';
             const response = await fetch(url);
             if (!response.ok) throw new Error('Ошибка загрузки данных жюри');
             const data = await response.json();
             
-            const newHash = getDataHash(data, 'Компания', 'Сумма баллов');
-            if (newHash !== lastJuryHash) {
-                lastJuryHash = newHash;
-                juryData = data;
-                renderJuryDashboard(juryData);
-            } else if (data.length === 0) {
+            if (!data || data.length === 0) {
                 document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">Нет данных от жюри</div>';
                 return;
-            } else {
-                renderJuryDashboard(data);
             }
+            
+            juryData = data;
+            renderJuryDashboard(juryData);
         } catch (error) {
             console.error('Ошибка загрузки жюри:', error);
             document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">❌ Ошибка загрузки данных жюри</div>';
@@ -451,10 +450,9 @@
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
             this.classList.add('active');
             document.getElementById(tabId).classList.add('active');
-            currentTab = tabId;
             
             if (tabId === 'tab2') {
-                loadJuryData(false);
+                loadJuryData();
             }
         });
     });
@@ -462,7 +460,7 @@
     document.getElementById('refreshBtn').addEventListener('click', () => {
         loadData(true);
         if (document.getElementById('tab2').classList.contains('active')) {
-            loadJuryData(true);
+            loadJuryData();
         }
     });
     document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
@@ -472,12 +470,12 @@
     updateTimerDisplay();
     startTimer();
     loadData(true);
-    loadJuryData(false);
+    loadJuryData();
     
     setInterval(() => {
         loadData(false);
         if (document.getElementById('tab2').classList.contains('active')) {
-            loadJuryData(false);
+            loadJuryData();
         }
     }, 180000);
 </script>
