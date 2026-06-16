@@ -172,6 +172,22 @@
         .rank-2 td:first-child { font-weight: 800; color: #c0c0c0; }
         .rank-3 td:first-child { font-weight: 800; color: #cd7f32; }
 
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 18px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+        .empty-message small {
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+            display: block;
+            margin-top: 10px;
+        }
+
         .loader { text-align: center; padding: 40px; color: white; font-size: 18px; }
         .footer { text-align: center; margin-top: 30px; color: rgba(255,255,255,0.5); font-size: 11px; }
         @media (max-width: 700px) {
@@ -222,13 +238,13 @@
 </div>
 
 <script>
-    // НОВЫЙ URL
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdhd75b581i1FzMBWU_iQCV1Qau6Lls0qffN5p_B4RhfG2nb0PgK12B6eZRmHZRAJd0Q/exec';
 
     let allData = [];
     let juryData = [];
     let timerInterval = null;
     let totalSeconds = 600;
+    let autoRefreshInterval = null;
     
     function playAlarm() {
         try {
@@ -293,6 +309,17 @@
     }
 
     function renderDashboard(data) {
+        const container = document.getElementById('dashboardContent');
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-message">
+                    📭 Нет данных для отображения
+                    <small>Данные из Листа 1 пока не поступили</small>
+                </div>
+            `;
+            return;
+        }
+        
         const totalVotes = data.length;
         const interestedCount = data.filter(d => d['Заинтересовало для дальнейшего рассмотрения?'] === 'Да').length;
         
@@ -326,12 +353,18 @@
                 <tbody>${tableRows}</tbody></table>
             </div>
         `;
-        document.getElementById('dashboardContent').innerHTML = html;
+        container.innerHTML = html;
     }
 
     function renderJuryDashboard(data) {
+        const container = document.getElementById('dashboardContentJury');
         if (!data || data.length === 0) {
-            document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">Нет данных от жюри</div>';
+            container.innerHTML = `
+                <div class="empty-message">
+                    📭 Нет данных для отображения
+                    <small>Оценки жюри пока не поступили</small>
+                </div>
+            `;
             return;
         }
         
@@ -361,65 +394,50 @@
                 <tbody>${tableRows}</tbody></table>
             </div>
         `;
-        document.getElementById('dashboardContentJury').innerHTML = html;
+        container.innerHTML = html;
     }
 
-    async function loadData(showStatus = true) {
+    async function loadData() {
         const statusDiv = document.getElementById('syncStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         const lastUpdateDiv = document.getElementById('lastUpdate');
         
-        if (showStatus) {
-            statusDiv.innerHTML = '⏳ Загрузка...';
-            refreshBtn.disabled = true;
-        }
+        statusDiv.innerHTML = '⏳ Загрузка...';
+        refreshBtn.disabled = true;
         
         try {
-            const url = SCRIPT_URL + '?ts=' + Date.now();
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Ошибка загрузки');
-            const data = await response.json();
-            if (!data || data.length === 0) throw new Error('Нет данных');
-            
-            allData = data;
+            // Загружаем Лист 1
+            const url1 = SCRIPT_URL + '?ts=' + Date.now();
+            const response1 = await fetch(url1);
+            if (!response1.ok) throw new Error('Ошибка загрузки Листа 1');
+            const data1 = await response1.json();
+            allData = data1 || [];
             renderDashboard(allData);
-            if (showStatus) statusDiv.innerHTML = '✅ Данные обновлены';
+            
+            // Загружаем Лист 2
+            const url2 = SCRIPT_URL + '?jury=1&ts=' + Date.now();
+            const response2 = await fetch(url2);
+            if (!response2.ok) throw new Error('Ошибка загрузки Листа 2');
+            const data2 = await response2.json();
+            juryData = data2 || [];
+            renderJuryDashboard(juryData);
+            
+            statusDiv.innerHTML = '✅ Данные обновлены';
             lastUpdateDiv.innerHTML = `📅 Обновлено: ${new Date().toLocaleString('ru-RU')}`;
             setTimeout(() => { if (statusDiv.innerHTML === '✅ Данные обновлены') statusDiv.innerHTML = ''; }, 2000);
         } catch (error) {
             console.error(error);
-            if (showStatus) {
-                statusDiv.innerHTML = '❌ Ошибка';
-                setTimeout(() => { if (statusDiv.innerHTML === '❌ Ошибка') statusDiv.innerHTML = ''; }, 2000);
-            }
-            if (!allData.length) {
-                document.getElementById('dashboardContent').innerHTML = '<div class="loader">❌ Ошибка загрузки данных</div>';
-            }
+            statusDiv.innerHTML = '❌ Ошибка';
+            setTimeout(() => { if (statusDiv.innerHTML === '❌ Ошибка') statusDiv.innerHTML = ''; }, 2000);
+            // Если данных ещё нет, показываем сообщение
+            if (!allData.length) renderDashboard([]);
+            if (!juryData.length) renderJuryDashboard([]);
         } finally {
-            if (showStatus) refreshBtn.disabled = false;
+            refreshBtn.disabled = false;
         }
     }
 
-    async function loadJuryData() {
-        try {
-            const url = SCRIPT_URL + '?jury=1&ts=' + Date.now();
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Ошибка загрузки данных жюри');
-            const data = await response.json();
-            
-            if (!data || data.length === 0) {
-                document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">Нет данных от жюри</div>';
-                return;
-            }
-            
-            juryData = data;
-            renderJuryDashboard(juryData);
-        } catch (error) {
-            console.error('Ошибка загрузки жюри:', error);
-            document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">❌ Ошибка загрузки данных жюри</div>';
-        }
-    }
-
+    // Переключение вкладок (без лишней загрузки)
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const tabId = this.getAttribute('data-tab');
@@ -427,33 +445,21 @@
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
             this.classList.add('active');
             document.getElementById(tabId).classList.add('active');
-            
-            if (tabId === 'tab2') {
-                loadJuryData();
-            }
         });
     });
     
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        loadData(true);
-        if (document.getElementById('tab2').classList.contains('active')) {
-            loadJuryData();
-        }
-    });
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
     document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
     document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
     document.getElementById('startTimerBtn').addEventListener('click', startTimer);
     
     updateTimerDisplay();
     startTimer();
-    loadData(true);
-    loadJuryData();
+    loadData();
     
-    setInterval(() => {
-        loadData(false);
-        if (document.getElementById('tab2').classList.contains('active')) {
-            loadJuryData();
-        }
+    // Автообновление каждые 3 минуты (обновляет обе вкладки)
+    autoRefreshInterval = setInterval(() => {
+        loadData();
     }, 180000);
 </script>
 </body>
