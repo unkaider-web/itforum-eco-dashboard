@@ -222,6 +222,7 @@
 </div>
 
 <script>
+    // ⚠️ ВСТАВЬТЕ ВАШ URL ⚠️
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4OdIQLOMP_n0rrkQOwmU2gaoQJnQQ4tjzh9xT6UDXcxH0LNC-ceSiNBz12IArAIBewA/exec';
 
     let allData = [];
@@ -295,7 +296,7 @@
     function getDataHash(data) {
         let str = '';
         data.forEach(d => {
-            str += (d['Наименование'] || '') + ':' + (d['СУММА БАЛЛОВ'] || 0) + ';';
+            str += (d['Наименование'] || d['Компания'] || '') + ':' + (d['СУММА БАЛЛОВ'] || d['Сумма баллов'] || 0) + ';';
         });
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -425,7 +426,8 @@
 
     async function loadJuryData() {
         try {
-            const url = SCRIPT_URL + '?ts=' + Date.now() + '&sheet=jury';
+            // Используем тот же URL, но с параметром jury=1, чтобы скрипт понял
+            const url = SCRIPT_URL + '?jury=1&ts=' + Date.now();
             const response = await fetch(url);
             if (!response.ok) throw new Error('Ошибка загрузки данных жюри');
             const data = await response.json();
