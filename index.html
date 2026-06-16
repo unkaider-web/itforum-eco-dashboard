@@ -154,7 +154,7 @@
     <div class="subtitle">Экспертная сессия «Применение ДЗЗ, БАС и ИИ в природоохранной деятельности» — Биржа решений 2026</div>
     
     <div class="top-bar">
-        <div class="auto-badge" style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 30px; font-size: 12px;">🔄 Автообновление: 5 минут</div>
+        <div class="auto-badge" style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 30px; font-size: 12px;">🔄 Автообновление: 3 минуты</div>
         <button class="refresh-btn" id="refreshBtn">🔄 Обновить сейчас</button>
         <div class="status" id="syncStatus"></div>
     </div>
@@ -321,8 +321,19 @@
         }
         
         try {
-            const url = SCRIPT_URL + '?ts=' + Date.now();
-            const response = await fetch(url);
+            // Уникальный параметр для обхода кеша
+            const cacheBuster = Date.now() + Math.random() * 1000;
+            const url = SCRIPT_URL + '?ts=' + cacheBuster;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             if (!response.ok) throw new Error('Ошибка загрузки');
             const data = await response.json();
             if (!data || data.length === 0) throw new Error('Нет данных');
@@ -365,8 +376,8 @@
     startTimer();
     loadData(true);
     
-    // Автообновление данных каждые 5 минут
-    setInterval(() => loadData(false), 300000);
+    // Автообновление данных каждые 3 минуты
+    setInterval(() => loadData(false), 180000);
 </script>
 </body>
 </html>
