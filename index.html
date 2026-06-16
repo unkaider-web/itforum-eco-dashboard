@@ -14,7 +14,63 @@
         }
         .container { max-width: 1200px; margin: 0 auto; }
         h1 { text-align: center; color: white; margin-bottom: 10px; font-size: 1.8em; }
-        .subtitle { text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 25px; font-size: 14px; }
+        .subtitle { text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 15px; font-size: 14px; }
+
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .refresh-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.25); }
+        .status { color: rgba(255,255,255,0.8); font-size: 12px; }
+        .last-updated { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 5px; text-align: right; }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            background: transparent;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            color: rgba(255,255,255,0.5);
+            border-bottom: 2px solid transparent;
+            letter-spacing: 0.5px;
+        }
+        .tab-btn.active {
+            color: rgba(255,255,255,0.9);
+            border-bottom-color: rgba(255,255,255,0.4);
+        }
+        .tab-btn:hover { color: rgba(255,255,255,0.8); }
+        .tab-content {
+            background: rgba(255,255,255,0.05);
+            border-radius: 0 0 20px 20px;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
 
         .timer-section {
             margin-bottom: 30px;
@@ -67,28 +123,6 @@
             background: rgba(255,255,255,0.25);
             color: white;
         }
-
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .refresh-btn {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 6px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: 0.2s;
-        }
-        .refresh-btn:hover { background: rgba(255,255,255,0.25); }
-        .status { color: rgba(255,255,255,0.8); font-size: 12px; }
-        .last-updated { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 5px; text-align: right; }
 
         .stats-row {
             display: grid;
@@ -172,35 +206,36 @@
         </div>
     </div>
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <h3>📊 Всего голосов</h3>
-            <div class="value" id="totalVotes">0</div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab1">Участники</button>
+        <button class="tab-btn" data-tab="tab2">Жюри</button>
+    </div>
+    <div class="tab-content">
+        <div class="tab-pane active" id="tab1">
+            <div id="dashboardContent"><div class="loader">Загрузка данных...</div></div>
         </div>
-        <div class="stat-card">
-            <h3>✅ Заинтересовало</h3>
-            <div class="value" id="interestedCount">0</div>
+        <div class="tab-pane" id="tab2">
+            <div id="dashboardContentJury"><div class="loader">Загрузка данных жюри...</div></div>
         </div>
     </div>
-
-    <div id="dashboardContent"><div class="loader">Загрузка данных...</div></div>
     <div class="footer">Данные загружаются из Google Sheets в реальном времени</div>
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3IuYipcj_pJHZZUy9XsuO2TeOb2YFp_r7CAinStbsUtyyDvtJ2DN5UFN5RSdOEuTVzw/exec';
-    
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4OdIQLOMP_n0rrkQOwmU2gaoQJnQQ4tjzh9xT6UDXcxH0LNC-ceSiNBz12IArAIBewA/exec';
+
     let allData = [];
+    let juryData = [];
     let lastDataHash = '';
+    let lastJuryHash = '';
     let timerInterval = null;
     let totalSeconds = 600;
-    let autoRefreshInterval = null;
+    let currentTab = 'tab1';
     
     function playAlarm() {
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const now = audioContext.currentTime;
-            
             const oscillator1 = audioContext.createOscillator();
             const gainNode1 = audioContext.createGain();
             oscillator1.connect(gainNode1);
@@ -210,7 +245,6 @@
             oscillator1.start();
             gainNode1.gain.exponentialRampToValueAtTime(0.0001, now + 3);
             oscillator1.stop(now + 3);
-            
             const oscillator2 = audioContext.createOscillator();
             const gainNode2 = audioContext.createGain();
             oscillator2.connect(gainNode2);
@@ -260,10 +294,10 @@
         updateTimerDisplay();
     }
 
-    function getDataHash(data) {
+    function getDataHash(data, idField = 'Наименование', scoreField = 'СУММА БАЛЛОВ') {
         let str = '';
         data.forEach(d => {
-            str += d['Наименование'] + ':' + (d['СУММА БАЛЛОВ'] || 0) + ';';
+            str += (d[idField] || '') + ':' + (d[scoreField] || 0) + ';';
         });
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -297,16 +331,47 @@
         });
         
         const html = `
+            <div class="stats-row">
+                <div class="stat-card"><h3>📊 Всего голосов</h3><div class="value">${totalVotes}</div></div>
+                <div class="stat-card"><h3>✅ Заинтересовало</h3><div class="value">${interestedCount}</div></div>
+            </div>
             <div class="table-container">
-                <h3>🏆 Рейтинг вендоров по сумме баллов</h3>
+                <h3>🏆 Рейтинг вендоров по сумме баллов (все участники)</h3>
                 <table><thead><tr><th>#</th><th>Вендор</th><th>Сумма баллов</th></tr></thead>
                 <tbody>${tableRows}</tbody></table>
             </div>
         `;
-        
         document.getElementById('dashboardContent').innerHTML = html;
-        document.getElementById('totalVotes').textContent = totalVotes;
-        document.getElementById('interestedCount').textContent = interestedCount;
+    }
+
+    function renderJuryDashboard(data) {
+        const orgTotalScores = {};
+        data.forEach(d => {
+            const org = d['Компания'];
+            const score = parseInt(d['Сумма баллов']) || 0;
+            orgTotalScores[org] = (orgTotalScores[org] || 0) + score;
+        });
+        const orgRanking = Object.entries(orgTotalScores)
+            .map(([org, totalScore]) => ({ org, totalScore }))
+            .sort((a, b) => b.totalScore - a.totalScore);
+        
+        let tableRows = '';
+        orgRanking.forEach((item, idx) => {
+            let rankClass = '';
+            if (idx === 0) rankClass = 'rank-1';
+            else if (idx === 1) rankClass = 'rank-2';
+            else if (idx === 2) rankClass = 'rank-3';
+            tableRows += `<tr class="${rankClass}"><td>${idx + 1}<td>${item.org}<td><strong>${item.totalScore}</strong></tr>`;
+        });
+        
+        const html = `
+            <div class="table-container">
+                <h3>🏆 Рейтинг вендоров по сумме баллов (оценка жюри)</h3>
+                <table><thead><tr><th>#</th><th>Вендор</th><th>Сумма баллов</th></tr></thead>
+                <tbody>${tableRows}</tbody></table>
+            </div>
+        `;
+        document.getElementById('dashboardContentJury').innerHTML = html;
     }
 
     async function loadData(showStatus = true) {
@@ -354,8 +419,52 @@
             if (showStatus) refreshBtn.disabled = false;
         }
     }
+
+    async function loadJuryData(showStatus = true) {
+        try {
+            const url = SCRIPT_URL + '?ts=' + Date.now() + '&sheet=jury';
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Ошибка загрузки данных жюри');
+            const data = await response.json();
+            
+            const newHash = getDataHash(data, 'Компания', 'Сумма баллов');
+            if (newHash !== lastJuryHash) {
+                lastJuryHash = newHash;
+                juryData = data;
+                renderJuryDashboard(juryData);
+            } else if (data.length === 0) {
+                document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">Нет данных от жюри</div>';
+                return;
+            } else {
+                renderJuryDashboard(data);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки жюри:', error);
+            document.getElementById('dashboardContentJury').innerHTML = '<div class="loader">❌ Ошибка загрузки данных жюри</div>';
+        }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            currentTab = tabId;
+            
+            if (tabId === 'tab2') {
+                loadJuryData(false);
+            }
+        });
+    });
     
-    document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        loadData(true);
+        if (document.getElementById('tab2').classList.contains('active')) {
+            loadJuryData(true);
+        }
+    });
     document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
     document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
     document.getElementById('startTimerBtn').addEventListener('click', startTimer);
@@ -363,9 +472,14 @@
     updateTimerDisplay();
     startTimer();
     loadData(true);
+    loadJuryData(false);
     
-    // Автообновление каждые 3 минуты
-    setInterval(() => loadData(false), 180000);
+    setInterval(() => {
+        loadData(false);
+        if (document.getElementById('tab2').classList.contains('active')) {
+            loadJuryData(false);
+        }
+    }, 180000);
 </script>
 </body>
 </html>
